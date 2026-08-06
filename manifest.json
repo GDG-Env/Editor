@@ -11,7 +11,8 @@
   "sourceUrl": "https://github.com/GDG-Env/Editor",
   "properties": {
     "supportMultipleInstances": true,
-    "hasLocale": true
+    "hasLocale": true,
+    "useDataSourcesEnabled": true
   },
   "label": "Editor",
   "i18nLabelKey": "_widgetLabel",

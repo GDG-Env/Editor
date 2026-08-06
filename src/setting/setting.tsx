@@ -29,9 +29,13 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
   const layers: EditorLayerConfig[] = ((props.config?.layers as any) || []) as EditorLayerConfig[]
 
   const saveLayers = (next: EditorLayerConfig[]) => {
+    const useDataSources = next
+      .map(l => l.useDataSource)
+      .filter(Boolean) as UseDataSource[]
     props.onSettingChange({
       id: props.id,
-      config: props.config.set('layers', next as any)
+      config: props.config.set('layers', next as any),
+      useDataSources
     })
   }
 
