@@ -85,18 +85,6 @@ export default class Widget extends React.PureComponent<AllWidgetProps<{}>, Stat
 
     let mvc = <p>Please select a map.</p>;
 
-    const css = `
-    .esri-editor__scroller {
-      overflow-y: auto;
-      padding-top: $cap-spacing--half;
-      padding-bottom: $cap-spacing;
-      max-height: 1em;
-      }
-      .esri-editor__content-group {
-        max-height: 1em;
-      }
-
-      `
     if (
       this.props.hasOwnProperty("useMapWidgetIds") &&
       this.props.useMapWidgetIds &&
@@ -112,14 +100,10 @@ export default class Widget extends React.PureComponent<AllWidgetProps<{}>, Stat
 
     return (
       <div
-      className="widget-js-api-editor"
-      style={{ height: "100%" , overflow: "auto" }}
+        className="widget-js-api-editor"
+        style={{ height: "100%", display: "flex", flexDirection: "column" }}
       >
-       <div ref={this.myRef}>
-          <style>
-            {css}
-          </style>
-        </div>
+        <div ref={this.myRef} style={{ flex: 1, overflow: "auto" }} />
         {mvc}
       </div>
     );
