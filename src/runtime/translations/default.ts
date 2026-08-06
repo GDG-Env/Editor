@@ -19,5 +19,5 @@
 */
 export default {
   _widgetLabel: "Editor",
-  _widgetDescription: 'A widget from the ArcGIS JavaScript API.'
+  _widgetDescription: 'Custom Editor widget from the ArcGIS JavaScript API with per-layer / per-field configuration.'
 };

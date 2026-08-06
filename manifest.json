@@ -9,7 +9,12 @@
   "copyright": "GDG-Env",
   "license": "http://www.apache.org/licenses/LICENSE-2.0",
   "sourceUrl": "https://github.com/GDG-Env/Editor",
-  "properties": {},
+  "properties": {
+    "supportMultipleInstances": true,
+    "hasLocale": true
+  },
+  "label": "Editor",
+  "i18nLabelKey": "_widgetLabel",
   "translatedLocales": [
     "en",
     "fr"

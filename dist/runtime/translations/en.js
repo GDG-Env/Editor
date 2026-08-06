@@ -1,1 +1,1 @@
-System.register([],(function(e){return{execute:function(){e({_widgetLabel:"Editor",_widgetDescription:"A widget from the ArcGIS JavaScript API."})}}}));
+System.register([],(function(e){return{execute:function(){e({_widgetLabel:"Editor",_widgetDescription:"Custom Editor widget from the ArcGIS JavaScript API with per-layer / per-field configuration."})}}}));

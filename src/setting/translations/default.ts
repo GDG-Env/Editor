@@ -18,5 +18,17 @@
   LICENSE file.
 */
 export default {
-  selectMapWidget: "Select Map widget:"
+  selectMapWidget: "Select Map widget:",
+  editableLayers: "Editable layers",
+  selectMapFirst: "Select a Map widget above first.",
+  noLayerHint: "Click + Add a layer to configure an editable layer.",
+  layerLabel: "Layer",
+  chooseLayer: "Choose a feature layer",
+  editableFields: "Fields to expose in the editor",
+  fieldName: "Field",
+  visible: "Visible",
+  editable: "Editable",
+  required: "Required",
+  optionalLabel: "Optional label",
+  addLayer: "Add a layer"
 };

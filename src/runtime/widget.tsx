@@ -1,111 +1,130 @@
-/**
-  Licensing
-
-  Copyright 2021 Esri
-
-  Licensed under the Apache License, Version 2.0 (the "License"); You
-  may not use this file except in compliance with the License. You may
-  obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-  implied. See the License for the specific language governing
-  permissions and limitations under the License.
-
-  A copy of the license is available in the repository's
-  LICENSE file.
-*/
 /** @jsx jsx */
-import { AllWidgetProps, jsx, React } from "jimu-core";
-import { JimuMapViewComponent, JimuMapView } from "jimu-arcgis";
-import Editor from "esri/widgets/Editor";
-
+import { type AllWidgetProps, jsx, React, DataSourceManager } from 'jimu-core'
+import { JimuMapViewComponent, type JimuMapView, FeatureLayerDataSource } from 'jimu-arcgis'
+import Editor from 'esri/widgets/Editor'
+import { type IMConfig } from '../config'
 
 interface State {
-  jimuMapView: JimuMapView;
-  currentWidget: Editor;
+  jimuMapView: JimuMapView
+  currentWidget: Editor
 }
 
-
-export default class Widget extends React.PureComponent<AllWidgetProps<{}>, State>{
-
-  private myRef = React.createRef<HTMLDivElement>();
+export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>, State> {
+  private myRef = React.createRef<HTMLDivElement>()
 
   constructor(props) {
-    super(props);
-    this.state = {
-      jimuMapView: null,
-      currentWidget: null
-    };
+    super(props)
+    this.state = { jimuMapView: null, currentWidget: null }
   }
 
-  activeViewChangeHandler = (jmv: JimuMapView) => {
-    if (this.state.jimuMapView) {
-      if (this.state.currentWidget) {
-        this.state.currentWidget.destroy();
+  private destroyEditor = () => {
+    if (this.state.currentWidget) {
+      try { this.state.currentWidget.destroy() } catch { /* noop */ }
+    }
+  }
+
+  private buildLayerInfos = async (jmv: JimuMapView) => {
+    const cfgLayers = (this.props.config?.layers as any) || []
+    if (!cfgLayers || cfgLayers.length === 0) return null
+
+    const dsm = DataSourceManager.getInstance()
+    const infos: any[] = []
+
+    for (const layerCfg of cfgLayers) {
+      const uds = layerCfg.useDataSource
+      if (!uds) continue
+      try {
+        let ds = dsm.getDataSource(uds.dataSourceId) as FeatureLayerDataSource
+        if (!ds) {
+          ds = await dsm.createDataSourceByUseDataSource(uds) as FeatureLayerDataSource
+        }
+        const layer: any = (ds as any)?.layer
+        if (!layer) continue
+        if (typeof layer.load === 'function') {
+          try { await layer.load() } catch { /* noop */ }
+        }
+
+        const fieldsCfg = (layerCfg.fields || []) as any[]
+        const fieldConfig = fieldsCfg.map(f => ({
+          name: f.name,
+          label: f.label || undefined,
+          visible: f.visible !== false,
+          editable: f.editable !== false,
+          required: !!f.required
+        }))
+
+        infos.push({
+          layer,
+          fieldConfig: fieldConfig.length > 0 ? fieldConfig : undefined
+        })
+      } catch (err) {
+        console.warn('[editor] could not resolve layer', uds, err)
       }
     }
+    return infos.length > 0 ? infos : null
+  }
 
-    if (jmv) {
-      this.setState({
-        jimuMapView: jmv
-      });
-
-      if (this.myRef.current) {
-        const container = document.createElement("div");
-        this.myRef.current.innerHTML = "";
-        this.myRef.current.appendChild(container);
-
-        const newEditor = new Editor({
-          view: jmv.view,
-          container
-        });
-
-        this.setState({
-          currentWidget: newEditor
-        });
-      } else {
-        console.error('could not find this.myRef.current');
-      }
+  activeViewChangeHandler = async (jmv: JimuMapView) => {
+    this.destroyEditor()
+    if (!jmv) {
+      this.setState({ jimuMapView: null, currentWidget: null })
+      return
     }
-  };
+    this.setState({ jimuMapView: jmv })
 
-  componentDidUpdate = evt => {
+    if (!this.myRef.current) {
+      console.error('[editor] container ref is not ready')
+      return
+    }
 
+    const container = document.createElement('div')
+    container.style.height = '100%'
+    this.myRef.current.innerHTML = ''
+    this.myRef.current.appendChild(container)
+
+    const layerInfos = await this.buildLayerInfos(jmv)
+
+    const editorProps: any = { view: jmv.view, container }
+    if (layerInfos) editorProps.layerInfos = layerInfos
+
+    const newEditor = new Editor(editorProps)
+    this.setState({ currentWidget: newEditor })
+  }
+
+  componentDidUpdate(prevProps: AllWidgetProps<IMConfig>) {
     if (this.props.useMapWidgetIds && this.props.useMapWidgetIds.length === 0) {
-      if (this.state.currentWidget) {
-        this.state.currentWidget.destroy();
-      }
+      this.destroyEditor()
+      return
     }
-  };
+    if (prevProps.config !== this.props.config && this.state.jimuMapView) {
+      // Rebuild Editor with new layer/field config
+      this.activeViewChangeHandler(this.state.jimuMapView)
+    }
+  }
+
+  componentWillUnmount() {
+    this.destroyEditor()
+  }
 
   render() {
-
-    let mvc = <p>Please select a map.</p>;
-
-    if (
-      this.props.hasOwnProperty("useMapWidgetIds") &&
-      this.props.useMapWidgetIds &&
-      this.props.useMapWidgetIds[0]
-    ) {
-      mvc = (
-        <JimuMapViewComponent
-          useMapWidgetId={this.props.useMapWidgetIds?.[0]}
-          onActiveViewChange={this.activeViewChangeHandler}
-        />
-      );
-    }
-
+    const mapId = this.props.useMapWidgetIds?.[0]
     return (
       <div
         className="widget-js-api-editor"
-        style={{ height: "100%", display: "flex", flexDirection: "column" }}
+        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
       >
-        <div ref={this.myRef} style={{ flex: 1, overflow: "auto" }} />
-        {mvc}
+        <div ref={this.myRef} style={{ flex: 1, minHeight: 0, overflow: 'auto' }} />
+        {mapId
+          ? (
+            <JimuMapViewComponent
+              useMapWidgetId={mapId}
+              onActiveViewChange={this.activeViewChangeHandler}
+            />
+            )
+          : (
+            <p style={{ padding: 8, margin: 0 }}>Please select a map.</p>
+            )}
       </div>
-    );
+    )
   }
 }
