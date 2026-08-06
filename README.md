@@ -1,9 +1,33 @@
-# Editor widget
+# Editor Widget — ArcGIS Experience Builder
 
-This sample demonstrates how to include the Editor widget from the ArcGIS API for JavaScript. 
+Custom widget that embeds the ArcGIS JavaScript API `Editor` widget inside ArcGIS Experience Builder.
+
+**GitHub repository:** https://github.com/GDG-Env/Editor  
+**Manifest URL:** `https://raw.githubusercontent.com/GDG-Env/Editor/main/manifest.json`
+
+---
+
+## Integration in Experience Builder
+
+### Option A — Local installation
+Clone this repo and copy the `editor` folder into the `client/your-extensions/widgets/` folder of your Experience Builder installation:
+
+```bash
+git clone https://github.com/GDG-Env/Editor.git
+cp -r Editor <ExB-install>/client/your-extensions/widgets/editor
+```
+
+### Option B — External widget via manifest URL
+In ArcGIS Experience Builder, go to **Widget Manager → Add widget → External widget** and paste the manifest URL:
+
+```
+https://raw.githubusercontent.com/GDG-Env/Editor/main/manifest.json
+```
+
+---
 
 ## How to use the sample
-Clone the [sample repo](https://github.com/esri/arcgis-experience-builder-sdk-resources) and copy this widget's folder (within `samples/widgets`) to the `client/your-extensions/widgets` folder of your Experience Builder installation.
+Add the **Editor** widget to your app. In the widget settings panel, select a Map widget that has at least one editable feature layer. The Editor will appear automatically once a valid map and editable layer are detected.
 
 ## How it works
 This sample imports the required modules to leverage the `Editor` widget from the ArcGIS API for JavaScript. The `Editor` widget is dependent on a `Map` widget, which must have an editable feature layer. If it recognizes it is editable, the layer can be used by the widget. 
