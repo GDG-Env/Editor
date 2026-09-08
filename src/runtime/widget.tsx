@@ -2,8 +2,6 @@
 import { type AllWidgetProps, jsx, React, DataSourceManager } from 'jimu-core'
 import { JimuMapViewComponent, type JimuMapView, FeatureLayerDataSource } from 'jimu-arcgis'
 import Editor from 'esri/widgets/Editor'
-import FormTemplate from 'esri/form/FormTemplate'
-import FieldElement from 'esri/form/elements/FieldElement'
 import { type IMConfig } from '../config'
 
 interface State {
@@ -62,12 +60,12 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
     return null
   }
 
-  private buildFormTemplate = (layer: any, layerCfg: any): FormTemplate | undefined => {
+  private buildFormTemplate = (layer: any, layerCfg: any): any => {
     const fieldsCfg: any[] = (layerCfg?.fields as any[]) || []
     if (fieldsCfg.length === 0) return undefined
 
     const expressionInfos: any[] = []
-    const elements: FieldElement[] = []
+    const elements: any[] = []
     let hasNonEditable = false
     let hasRequired = false
 
@@ -76,21 +74,22 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
       if (!fieldName) continue
       if (f?.visible === false) continue
 
-      const props: any = {
+      const element: any = {
+        type: 'field',
         fieldName,
         label: (f?.label && String(f.label).trim()) || fieldName
       }
 
       if (f?.editable === false) {
-        props.editableExpression = 'expr_false'
+        element.editableExpression = 'expr_false'
         hasNonEditable = true
       }
       if (f?.required === true) {
-        props.requiredExpression = 'expr_true'
+        element.requiredExpression = 'expr_true'
         hasRequired = true
       }
 
-      elements.push(new FieldElement(props))
+      elements.push(element)
     }
 
     if (elements.length === 0) return undefined
@@ -102,10 +101,9 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
       expressionInfos.push({ name: 'expr_true', expression: 'true', returnType: 'boolean' })
     }
 
-    return new FormTemplate({
-      elements,
-      expressionInfos: expressionInfos.length > 0 ? expressionInfos : undefined
-    })
+    const formTemplate: any = { elements }
+    if (expressionInfos.length > 0) formTemplate.expressionInfos = expressionInfos
+    return formTemplate
   }
 
   private buildLayerInfos = async (jmv: JimuMapView) => {
