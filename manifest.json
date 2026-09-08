@@ -1,9 +1,9 @@
 {
   "name": "editor",
   "type": "widget",
-  "version": "1.4.0",
-  "dependency": "jimu-arcgis",
-  "exbVersion": "1.4.0",
+  "version": "1.13.1",
+  "dependency": ["jimu-arcgis"],
+  "exbVersion": "1.13.0",
   "author": "GDG-Env",
   "description": "ArcGIS Experience Builder custom Editor widget wrapping the ArcGIS JS API Editor widget",
   "copyright": "GDG-Env",
