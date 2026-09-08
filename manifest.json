@@ -16,10 +16,6 @@
     "hasLocale": true,
     "useDataSourcesEnabled": true
   },
-  "translatedLocales": [
-    "en",
-    "fr"
-  ],
   "defaultSize": {
     "width": 400,
     "height": 600
