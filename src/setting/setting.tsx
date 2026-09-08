@@ -21,6 +21,8 @@ import { type IMConfig, type EditorLayerConfig, type EditorFieldConfig } from '.
 const uid = () => Math.random().toString(36).slice(2, 9)
 
 const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
+  const [pendingLayer, setPendingLayer] = React.useState<UseDataSource | null>(null)
+
   const t = (id: string) => props.intl.formatMessage({
     id,
     defaultMessage: (defaultMessages as any)[id] || id
@@ -43,11 +45,20 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
     props.onSettingChange({ id: props.id, useMapWidgetIds: ids })
   }
 
+  const selectedLayerIds = new Set(
+    layers
+      .map(layer => layer.useDataSource?.dataSourceId)
+      .filter(Boolean)
+  )
+
   const addLayer = () => {
+    if (!pendingLayer?.dataSourceId || selectedLayerIds.has(pendingLayer.dataSourceId)) return
+
     saveLayers([
       ...layers,
-      { id: uid(), useDataSource: null as any, fields: [] }
+      { id: uid(), useDataSource: pendingLayer, fields: [] }
     ])
+    setPendingLayer(null)
   }
 
   const updateLayer = (i: number, patch: Partial<EditorLayerConfig>) => {
@@ -124,31 +135,40 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
           </SettingRow>
         )}
 
+        {mapIds && (
+          <SettingRow>
+            <div style={{ width: '100%' }}>
+              <div style={lbl}>{t('chooseLayer')}</div>
+              <DataSourceSelector
+                types={Immutable([DataSourceTypes.FeatureLayer])}
+                useMapWidgetIds={Immutable(mapIds)}
+                useDataSources={pendingLayer ? Immutable([pendingLayer]) : Immutable([])}
+                mustUseDataSource
+                hideAddDataButton
+                hideDataView
+                onChange={(arr: any) => {
+                  const first = arr && arr.length ? arr[0] : null
+                  const uds = first
+                    ? (typeof first.asMutable === 'function' ? first.asMutable({ deep: true }) : first)
+                    : null
+                  setPendingLayer(uds)
+                }}
+              />
+              {pendingLayer?.dataSourceId && selectedLayerIds.has(pendingLayer.dataSourceId) && (
+                <div style={{ fontSize: 12, color: '#f90', marginTop: 4 }}>{t('layerAlreadyAdded')}</div>
+              )}
+            </div>
+          </SettingRow>
+        )}
+
         {mapIds && layers.map((layer, li) => (
           <div key={layer.id} style={card}>
             <div style={headerRow}>
               <span style={{ flex: 1, fontWeight: 600, fontSize: 12 }}>
-                {t('layerLabel')} {li + 1}{layer.useDataSource ? ` ÔÇö ${getLayerLabel(layer.useDataSource)}` : ''}
+                {t('layerLabel')} {li + 1}{layer.useDataSource ? ` — ${getLayerLabel(layer.useDataSource)}` : ''}
               </span>
-              <Button size="sm" type="tertiary" onClick={() => removeLayer(li)}>Ô£ò</Button>
+              <Button size="sm" type="tertiary" onClick={() => removeLayer(li)}>✕</Button>
             </div>
-
-            <div style={lbl}>{t('chooseLayer')}</div>
-            <DataSourceSelector
-              types={Immutable([DataSourceTypes.FeatureLayer])}
-              useMapWidgetIds={Immutable(mapIds)}
-              useDataSources={layer.useDataSource ? Immutable([layer.useDataSource]) : Immutable([])}
-              mustUseDataSource
-              hideAddDataButton
-              hideDataView
-              onChange={(arr: any) => {
-                const first = arr && arr.length ? arr[0] : null
-                const uds = first
-                  ? (typeof first.asMutable === 'function' ? first.asMutable({ deep: true }) : first)
-                  : null
-                updateLayer(li, { useDataSource: uds, fields: [] })
-              }}
-            />
 
             {layer.useDataSource && (
               <React.Fragment>
@@ -212,7 +232,13 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
 
         {mapIds && (
           <SettingRow>
-            <Button type="primary" size="sm" style={{ width: '100%' }} onClick={addLayer}>
+            <Button
+              type="primary"
+              size="sm"
+              style={{ width: '100%' }}
+              onClick={addLayer}
+              disabled={!pendingLayer?.dataSourceId || selectedLayerIds.has(pendingLayer.dataSourceId)}
+            >
               + {t('addLayer')}
             </Button>
           </SettingRow>
