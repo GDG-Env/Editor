@@ -79,15 +79,21 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
   const lbl: React.CSSProperties = { fontSize: 11, color: '#888', marginBottom: 2, marginTop: 8 }
   const headerRow: React.CSSProperties = { display: 'flex', gap: 4, alignItems: 'center', marginBottom: 4 }
   const fieldRow: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 70px 70px 70px',
-    gap: 6, alignItems: 'center',
-    padding: '6px 0',
+    padding: '8px 0',
     borderTop: '1px solid var(--border, #333)'
   }
-  const fieldHeader: React.CSSProperties = {
-    ...fieldRow,
-    fontSize: 10, color: '#aaa', borderTop: 'none', padding: '2px 0'
+  const fieldOptionsRow: React.CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 6
+  }
+  const fieldOptionLabel: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 4,
+    fontSize: 12,
+    cursor: 'pointer'
   }
 
   const mapIds = props.useMapWidgetIds && props.useMapWidgetIds.length > 0
@@ -122,9 +128,9 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
           <div key={layer.id} style={card}>
             <div style={headerRow}>
               <span style={{ flex: 1, fontWeight: 600, fontSize: 12 }}>
-                {t('layerLabel')} {li + 1}{layer.useDataSource ? ` — ${getLayerLabel(layer.useDataSource)}` : ''}
+                {t('layerLabel')} {li + 1}{layer.useDataSource ? ` ÔÇö ${getLayerLabel(layer.useDataSource)}` : ''}
               </span>
-              <Button size="sm" type="tertiary" onClick={() => removeLayer(li)}>✕</Button>
+              <Button size="sm" type="tertiary" onClick={() => removeLayer(li)}>Ô£ò</Button>
             </div>
 
             <div style={lbl}>{t('chooseLayer')}</div>
@@ -152,7 +158,7 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
                   selectedFields={Immutable(layer.fields.map(f => f.name))}
                   isMultiple
                   onChange={(fields: any) => {
-                    const selectedNames: string[] = (fields || []).map((f: any) => f.jimuName || f.name)
+                    const selectedNames: string[] = (fields || []).map((f: any) => f.name || f.jimuName)
                     const existing = new Map(layer.fields.map(f => [f.name, f]))
                     const next: EditorFieldConfig[] = selectedNames.map(name =>
                       existing.get(name) || { name, label: '', visible: true, required: false, editable: true }
@@ -163,38 +169,38 @@ const Setting = (props: AllWidgetSettingProps<IMConfig>) => {
 
                 {layer.fields.length > 0 && (
                   <div style={{ marginTop: 8 }}>
-                    <div style={fieldHeader}>
-                      <div>{t('fieldName')}</div>
-                      <div style={{ textAlign: 'center' }}>{t('visible')}</div>
-                      <div style={{ textAlign: 'center' }}>{t('editable')}</div>
-                      <div style={{ textAlign: 'center' }}>{t('required')}</div>
-                    </div>
                     {layer.fields.map((f, fi) => (
                       <div key={f.name} style={fieldRow}>
-                        <div>
-                          <div style={{ fontSize: 12, marginBottom: 2 }}>{f.name}</div>
-                          <TextInput
-                            size="sm"
-                            value={f.label || ''}
-                            placeholder={t('optionalLabel')}
-                            onChange={e => updateField(li, fi, { label: e.target.value })}
-                          />
+                        <div style={{ fontSize: 12, marginBottom: 2 }}>{f.name}</div>
+                        <TextInput
+                          size="sm"
+                          value={f.label || ''}
+                          placeholder={t('optionalLabel')}
+                          onChange={e => updateField(li, fi, { label: e.target.value })}
+                        />
+                        <div style={fieldOptionsRow}>
+                          <label style={fieldOptionLabel}>
+                            <Checkbox
+                              checked={f.visible}
+                              onChange={e => updateField(li, fi, { visible: e.target.checked })}
+                            />
+                            {t('visible')}
+                          </label>
+                          <label style={fieldOptionLabel}>
+                            <Checkbox
+                              checked={f.editable}
+                              onChange={e => updateField(li, fi, { editable: e.target.checked })}
+                            />
+                            {t('editable')}
+                          </label>
+                          <label style={fieldOptionLabel}>
+                            <Checkbox
+                              checked={f.required}
+                              onChange={e => updateField(li, fi, { required: e.target.checked })}
+                            />
+                            {t('required')}
+                          </label>
                         </div>
-                        <Checkbox
-                          style={{ justifySelf: 'center' }}
-                          checked={f.visible}
-                          onChange={e => updateField(li, fi, { visible: e.target.checked })}
-                        />
-                        <Checkbox
-                          style={{ justifySelf: 'center' }}
-                          checked={f.editable}
-                          onChange={e => updateField(li, fi, { editable: e.target.checked })}
-                        />
-                        <Checkbox
-                          style={{ justifySelf: 'center' }}
-                          checked={f.required}
-                          onChange={e => updateField(li, fi, { required: e.target.checked })}
-                        />
                       </div>
                     ))}
                   </div>

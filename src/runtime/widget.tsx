@@ -2,6 +2,8 @@
 import { type AllWidgetProps, jsx, React, DataSourceManager } from 'jimu-core'
 import { JimuMapViewComponent, type JimuMapView, FeatureLayerDataSource } from 'jimu-arcgis'
 import Editor from 'esri/widgets/Editor'
+import FormTemplate from 'esri/form/FormTemplate'
+import FieldElement from 'esri/form/elements/FieldElement'
 import { type IMConfig } from '../config'
 
 interface State {
@@ -44,6 +46,68 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
     })
   }
 
+  private resolveFieldName = (layer: any, configuredName: string): string | null => {
+    if (!configuredName) return null
+
+    const directMatch = layer?.fieldsIndex?.get?.(configuredName)
+    if (directMatch) return directMatch.name
+
+    const candidates = configuredName.split(/[./]/).filter(Boolean)
+    for (let index = candidates.length - 1; index >= 0; index--) {
+      const candidate = candidates[index]
+      const field = layer?.fieldsIndex?.get?.(candidate)
+      if (field) return field.name
+    }
+
+    return null
+  }
+
+  private buildFormTemplate = (layer: any, layerCfg: any): FormTemplate | undefined => {
+    const fieldsCfg: any[] = (layerCfg?.fields as any[]) || []
+    if (fieldsCfg.length === 0) return undefined
+
+    const expressionInfos: any[] = []
+    const elements: FieldElement[] = []
+    let hasNonEditable = false
+    let hasRequired = false
+
+    for (const f of fieldsCfg) {
+      const fieldName = this.resolveFieldName(layer, f?.name)
+      if (!fieldName) continue
+      if (f?.visible === false) continue
+
+      const props: any = {
+        fieldName,
+        label: (f?.label && String(f.label).trim()) || fieldName
+      }
+
+      if (f?.editable === false) {
+        props.editableExpression = 'expr_false'
+        hasNonEditable = true
+      }
+      if (f?.required === true) {
+        props.requiredExpression = 'expr_true'
+        hasRequired = true
+      }
+
+      elements.push(new FieldElement(props))
+    }
+
+    if (elements.length === 0) return undefined
+
+    if (hasNonEditable) {
+      expressionInfos.push({ name: 'expr_false', expression: 'false', returnType: 'boolean' })
+    }
+    if (hasRequired) {
+      expressionInfos.push({ name: 'expr_true', expression: 'true', returnType: 'boolean' })
+    }
+
+    return new FormTemplate({
+      elements,
+      expressionInfos: expressionInfos.length > 0 ? expressionInfos : undefined
+    })
+  }
+
   private buildLayerInfos = async (jmv: JimuMapView) => {
     const cfgLayers = (this.props.config?.layers as any) || []
     const cfgById = new Map<string, any>()
@@ -79,22 +143,14 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
 
       const match = cfgById.get(layer.id)
       if (match) {
-        const fieldsCfg = (match.layerCfg.fields || []) as any[]
-        const fieldConfig = fieldsCfg
-          .filter(f => f.visible !== false)
-          .map(f => ({
-            name: f.name,
-            label: f.label || undefined,
-            editable: f.editable !== false,
-            required: !!f.required
-          }))
+        const formTemplate = this.buildFormTemplate(layer, match.layerCfg)
         infos.push({
           layer,
           enabled: true,
           addEnabled: true,
           updateEnabled: true,
           deleteEnabled: true,
-          fieldConfig: fieldConfig.length > 0 ? fieldConfig : undefined
+          formTemplate
         })
       } else {
         infos.push({ layer, enabled: false })
