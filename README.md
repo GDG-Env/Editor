@@ -3,7 +3,7 @@
 Custom widget that embeds the ArcGIS JavaScript API `Editor` widget inside ArcGIS Experience Builder.
 
 **GitHub repository:** https://github.com/GDG-Env/Editor  
-**Manifest URL:** `https://raw.githubusercontent.com/GDG-Env/Editor/main/manifest.json`
+**Manifest URL:** `https://gdg-env.github.io/Editor/manifest.json`
 
 ---
 
@@ -21,8 +21,10 @@ cp -r Editor <ExB-install>/client/your-extensions/widgets/editor
 In ArcGIS Experience Builder, go to **Widget Manager → Add widget → External widget** and paste the manifest URL:
 
 ```
-https://raw.githubusercontent.com/GDG-Env/Editor/main/manifest.json
+https://gdg-env.github.io/Editor/manifest.json
 ```
+
+`raw.githubusercontent.com` serves the manifest and JavaScript bundles as `text/plain`, which ArcGIS Enterprise may refuse to execute. GitHub Pages serves the same files with the correct MIME types.
 
 ---
 
