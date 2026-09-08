@@ -44,6 +44,32 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
     })
   }
 
+  private getLayerFromMapView = (jmv: JimuMapView, dataSourceId: string): any => {
+    try {
+      const layerViews = Object.values((jmv as any)?.jimuLayerViews || {}) as any[]
+      for (const layerView of layerViews) {
+        if (layerView?.layerDataSourceId === dataSourceId || layerView?.dataSourceId === dataSourceId) {
+          return layerView.layer
+        }
+      }
+    } catch {
+      /* noop */
+    }
+
+    return null
+  }
+
+  private resolveConfiguredLayer = async (jmv: JimuMapView, dataSourceId: string): Promise<any> => {
+    const fromMapView = this.getLayerFromMapView(jmv, dataSourceId)
+    if (fromMapView) return fromMapView
+
+    const existing = DataSourceManager.getInstance().getDataSource(dataSourceId) as FeatureLayerDataSource
+    if (existing) return (existing as any).layer || (existing as any).getLayer?.()
+
+    const waited = await this.waitForDataSource(dataSourceId, 2000)
+    return waited ? (waited as any).layer || (waited as any).getLayer?.() : null
+  }
+
   private resolveFieldName = (layer: any, configuredName: string): string | null => {
     if (!configuredName) return null
 
@@ -110,12 +136,13 @@ export default class Widget extends React.PureComponent<AllWidgetProps<IMConfig>
     const cfgLayers = (this.props.config?.layers as any) || []
     const cfgById = new Map<string, any>()
 
+    try { await (jmv?.view as any)?.when?.() } catch { /* noop */ }
+
     // Resolve each configured Feature Layer via its data source
     for (const layerCfg of cfgLayers) {
       const uds = layerCfg.useDataSource
       if (!uds?.dataSourceId) continue
-      const ds = await this.waitForDataSource(uds.dataSourceId)
-      const layer: any = ds ? (ds as any).layer : null
+      const layer: any = await this.resolveConfiguredLayer(jmv, uds.dataSourceId)
       if (!layer) {
         console.warn('[editor] data source / layer unavailable:', uds.dataSourceId)
         continue
